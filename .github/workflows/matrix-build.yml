@@ -1,0 +1,50 @@
+name: Matrix Build with Artifacts (145ad59)
+
+on:
+  push:
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: node-${{ matrix.node-version }}
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        node-version: [18, 20, 22]  # >= 3 variants
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # Step identifier (required)
+      - name: matrix-145ad59
+        run: echo "Building for Node ${{ matrix.node-version }} on $RUNNER_OS"
+
+      - name: Setup Node.js ${{ matrix.node-version }}
+        uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node-version }}
+
+      - name: Generate build artifact content
+        run: |
+          mkdir -p dist
+          {
+            echo "Build ID: 145ad59"
+            echo "Repository: $GITHUB_REPOSITORY"
+            echo "Commit: $GITHUB_SHA"
+            echo "Runner OS: $RUNNER_OS"
+            echo "Node Version: ${{ matrix.node-version }}"
+            echo "Build Time (UTC): $(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          } > dist/output-${{ matrix.node-version }}.txt
+
+      # Ensure the artifact has non-empty content
+      - name: Verify artifact is non-empty
+        run: test -s dist/output-${{ matrix.node-version }}.txt
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: build-145ad59-node${{ matrix.node-version }}
+          path: dist/output-${{ matrix.node-version }}.txt
+          if-no-files-found: error
+          retention-days: 7
